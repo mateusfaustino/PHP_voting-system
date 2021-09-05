@@ -51,6 +51,12 @@ class Data{
             $res = $cmd->fetch(PDO::FETCH_ASSOC);
             return $res;  
     }
+    public function read(){
+            $cmd = $this->pdo->prepare('SELECT * FROM '.$this->table);
+            $cmd->execute();
+            $res = $cmd->fetchAll(PDO::FETCH_ASSOC);
+            return $res;  
+    }
 
     //update
     public function update($column, $value,$id){
