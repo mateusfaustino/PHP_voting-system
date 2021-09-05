@@ -5,6 +5,7 @@ class Data{
     private $dbname;
     private $user;
     private $password;
+    private $pdo;
 
     public function __construct($host, $dbname, $user, $password,$table){
         $this->host=$host;
@@ -13,38 +14,48 @@ class Data{
         $this->password=$password;
         $this->table=$table;
         try {
-            $pdo = new PDO(
+            $this->pdo = new PDO(
                 "mysql: host=".$this->host."; dbname=".$this->dbname,
                 $this->user,
                 $this->password
-            );    
+            ); 
         } catch (PDOException $e) {
             echo 'Error: ' . $e->getMessage();
         }
     }
-
+    public function exists($column,$value, $id_exception){
+        $cmd = $this->pdo->prepare("SELECT id FROM phpcadastro.people WHERE ".$column." = :v");
+        $cmd->bindValue(":v", $value);
+        $cmd->execute();
+        $res = $cmd->fetch(PDO::FETCH_ASSOC);
+        if ($cmd->rowCount() > 0 && $res["id"]!=$id_exception){
+            return true;
+        }else{
+            return false;
+        }
+    }
     //create
-    public function insert(){
-        $cmd = $pdo->prepare('INSERT INTO :table () VALUES()');
-        $cmd->bindParam(':table',$this->table);
+    public function insert($name, $phone, $email){
+        $cmd = $this->pdo->prepare('INSERT INTO '.$this->table.' (name, phone, email) VALUES(:n,:p,:e)');
+        $cmd->bindParam(':n',$name);
+        $cmd->bindParam(':p',$phone);
+        $cmd->bindParam(':e',$email);
         $cmd->execute();
     }
 
     //read
-    public function read($id){
-        $cmd = $pdo->prepare('SELECT * FROM :table WHERE id=:id');
-        $cmd->bindParam(':table',$this->table);
-        $cmd->bindParam(':id',$id);
-        $cmd->execute();
-        $res = $cmd->fetch(PDO::FETCH_ASSOC);
-        return $res;
+    public function readOne($id){
+            $cmd = $this->pdo->prepare('SELECT * FROM '.$this->table.' WHERE id=:id');
+            $cmd->bindParam(':id',$id);
+            $cmd->execute();
+            $res = $cmd->fetch(PDO::FETCH_ASSOC);
+            return $res;  
     }
 
     //update
     public function update($column, $value,$id){
-        $cmd = $pdo->prepare('UPDATE :table SET :column = :value WHERE id=:id');
-        $cmd->bindParam(':table',$this->table);
-        $cmd->bindParam(':column',$column);
+        $cmd = $this->pdo->prepare('UPDATE '.$this->table.' SET '.$column.'=:value WHERE id=:id');
+        // $cmd->bindParam(':column',$column);
         $cmd->bindParam(':value',$value);
         $cmd->bindParam(':id',$id);
         $cmd->execute();
@@ -52,8 +63,7 @@ class Data{
     
     //delete
     public function delete($id){
-        $cmd = $pdo->prepare('DELETE FROM :table WHERE id=:id');
-        $cmd->bindParam(':table',$this->table);
+        $cmd = $this->pdo->prepare('DELETE FROM '.$this->table.' WHERE id=:id');
         $cmd->bindParam(':id',$id);
         $cmd->execute();
     }
